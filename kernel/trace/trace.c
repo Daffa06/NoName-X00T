@@ -41,6 +41,7 @@
 #include <linux/nmi.h>
 #include <linux/fs.h>
 #include <linux/sched/rt.h>
+#include <linux/coresight-stm.h>
 
 #include "trace.h"
 #include "trace_output.h"
@@ -573,8 +574,11 @@ int __trace_puts(unsigned long ip, const char *str, int size)
 	if (entry->buf[size - 1] != '\n') {
 		entry->buf[size] = '\n';
 		entry->buf[size + 1] = '\0';
-	} else
+		stm_log(OST_ENTITY_TRACE_PRINTK, entry->buf, size + 2);
+	} else {
 		entry->buf[size] = '\0';
+		stm_log(OST_ENTITY_TRACE_PRINTK, entry->buf, size + 1);
+	}
 
 	__buffer_unlock_commit(buffer, event);
 	ftrace_trace_stack(&global_trace, buffer, irq_flags, 4, pc, NULL);
@@ -615,6 +619,7 @@ int __trace_bputs(unsigned long ip, const char *str)
 	entry = ring_buffer_event_data(event);
 	entry->ip			= ip;
 	entry->str			= str;
+	stm_log(OST_ENTITY_TRACE_PRINTK, entry->str, strlen(entry->str)+1);
 
 	__buffer_unlock_commit(buffer, event);
 	ftrace_trace_stack(&global_trace, buffer, irq_flags, 4, pc, NULL);
@@ -1640,7 +1645,7 @@ static void __trace_find_cmdline(int pid, char comm[])
 
 	map = savedcmd->map_pid_to_cmdline[pid];
 	if (map != NO_CMDLINE_MAP)
-		strcpy(comm, get_saved_cmdlines(map));
+		strlcpy(comm, get_saved_cmdlines(map), TASK_COMM_LEN - 1);
 	else
 		strcpy(comm, "<...>");
 }
@@ -2290,6 +2295,7 @@ __trace_array_vprintk(struct ring_buffer *buffer,
 
 	memcpy(&entry->buf, tbuffer, len + 1);
 	if (!call_filter_check_discard(call, entry, buffer, event)) {
+		stm_log(OST_ENTITY_TRACE_PRINTK, entry->buf, len + 1);
 		__buffer_unlock_commit(buffer, event);
 		ftrace_trace_stack(&global_trace, buffer, flags, 6, pc, NULL);
 	}
@@ -3442,14 +3448,27 @@ static int show_traces_open(struct inode *inode, struct file *file)
 	if (tracing_disabled)
 		return -ENODEV;
 
+	if (trace_array_get(tr) < 0)
+		return -ENODEV;
+
 	ret = seq_open(file, &show_traces_seq_ops);
-	if (ret)
+	if (ret) {
+		trace_array_put(tr);
 		return ret;
+	}
 
 	m = file->private_data;
 	m->private = tr;
 
 	return 0;
+}
+
+static int show_traces_release(struct inode *inode, struct file *file)
+{
+	struct trace_array *tr = inode->i_private;
+
+	trace_array_put(tr);
+	return seq_release(inode, file);
 }
 
 static ssize_t
@@ -3482,8 +3501,8 @@ static const struct file_operations tracing_fops = {
 static const struct file_operations show_traces_fops = {
 	.open		= show_traces_open,
 	.read		= seq_read,
-	.release	= seq_release,
 	.llseek		= seq_lseek,
+	.release	= show_traces_release,
 };
 
 static ssize_t
@@ -4942,6 +4961,7 @@ waitagain:
 	       sizeof(struct trace_iterator) -
 	       offsetof(struct trace_iterator, seq));
 	cpumask_clear(iter->started);
+	trace_seq_init(&iter->seq);
 	iter->pos = -1;
 
 	trace_event_read_lock();
@@ -5356,8 +5376,11 @@ tracing_mark_write(struct file *filp, const char __user *ubuf,
 	if (entry->buf[cnt - 1] != '\n') {
 		entry->buf[cnt] = '\n';
 		entry->buf[cnt + 1] = '\0';
-	} else
+		stm_log(OST_ENTITY_TRACE_MARKER, entry->buf, cnt + 2);
+	} else {
 		entry->buf[cnt] = '\0';
+		stm_log(OST_ENTITY_TRACE_MARKER, entry->buf, cnt + 1);
+	}
 
 	__buffer_unlock_commit(buffer, event);
 

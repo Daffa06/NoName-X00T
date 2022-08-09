@@ -1693,8 +1693,7 @@ static int is_trap_at_addr(struct mm_struct *mm, unsigned long vaddr)
 	int result;
 
 	pagefault_disable();
-	result = __copy_from_user_inatomic(&opcode, (void __user*)vaddr,
-							sizeof(opcode));
+	result = __get_user(opcode, (uprobe_opcode_t __user *)vaddr);
 	pagefault_enable();
 
 	if (likely(result == 0))
@@ -1836,7 +1835,7 @@ static void handle_trampoline(struct pt_regs *regs)
 
  sigill:
 	uprobe_warn(current, "handle uretprobe, sending SIGILL.");
-	force_sig_info(SIGILL, SEND_SIG_FORCED, current);
+	force_sig(SIGILL, current);
 
 }
 
@@ -1952,7 +1951,7 @@ static void handle_singlestep(struct uprobe_task *utask, struct pt_regs *regs)
 
 	if (unlikely(err)) {
 		uprobe_warn(current, "execute the probed insn, sending SIGILL.");
-		force_sig_info(SIGILL, SEND_SIG_FORCED, current);
+		force_sig(SIGILL, current);
 	}
 }
 

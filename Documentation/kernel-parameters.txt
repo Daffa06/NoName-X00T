@@ -549,6 +549,10 @@ bytes respectively. Such letter suffixes can also be entirely omitted.
 			embedded devices based on command line input.
 			See Documentation/block/cmdline-partition.txt
 
+	boot_cpus=	[SMP]
+			Rather than attempting to online all possible CPUs at
+			boot time, only online the specified set of CPUs.
+
 	boot_delay=	Milliseconds to delay each printk during boot.
 			Values larger than 10 seconds (10000) are changed to
 			no delay (0).
@@ -746,6 +750,12 @@ bytes respectively. Such letter suffixes can also be entirely omitted.
 			seconds. Defaults to 10*60 = 10mins. A value of 0
 			disables the blank timer.
 
+	core_ctl_disable_cpumask= [SMP]
+			Exempt the CPUs from being managed by core_ctl.
+			core_ctl operates on a cluster basis. So all the
+			CPUs in a given cluster must be specified to disable
+			core_ctl for that cluster.
+
 	coredump_filter=
 			[KNL] Change the default value for
 			/proc/<pid>/coredump_filter.
@@ -938,7 +948,7 @@ bytes respectively. Such letter suffixes can also be entirely omitted.
 			The filter can be disabled or changed to another
 			driver later using sysfs.
 
-	drm_kms_helper.edid_firmware=[<connector>:]<file>[,[<connector>:]<file>]
+	drm.edid_firmware=[<connector>:]<file>[,[<connector>:]<file>]
 			Broken monitors, graphic adapters, KVMs and EDIDless
 			panels may send no or incorrect EDID data sets.
 			This parameter allows to specify an EDID data sets
@@ -2095,6 +2105,12 @@ bytes respectively. Such letter suffixes can also be entirely omitted.
 			full    - Enable MDS mitigation on vulnerable CPUs
 			off     - Unconditionally disable MDS mitigation
 
+			On TAA-affected machines, mds=off can be prevented by
+			an active TAA mitigation as both vulnerabilities are
+			mitigated with the same mechanism so in order to disable
+			this mitigation, you need to specify tsx_async_abort=off
+			too.
+
 			Not specifying this option is equivalent to
 			mds=full.
 
@@ -2230,6 +2246,7 @@ bytes respectively. Such letter suffixes can also be entirely omitted.
 					       spectre_v2_user=off [X86]
 					       spec_store_bypass_disable=off [X86]
 					       mds=off [X86]
+					       tsx_async_abort=off [X86]
 
 			auto (default)
 				Mitigate all CPU vulnerabilities, but leave SMT
@@ -2796,6 +2813,11 @@ bytes respectively. Such letter suffixes can also be entirely omitted.
 			each page is disabled in default. With this switch,
 			we can turn it on.
 			on: enable the feature
+
+	page_poison=	[KNL] Boot-time parameter changing the state of
+			poisoning on the buddy allocator.
+			off: turn off poisoning
+			on: turn on poisoning
 
 	panic=		[KNL] Kernel behaviour on panic: delay <timeout>
 			timeout > 0: seconds before rebooting
@@ -4116,6 +4138,72 @@ bytes respectively. Such letter suffixes can also be entirely omitted.
 			platforms where RDTSC is slow and this accounting
 			can add overhead.
 
+	tsx=		[X86] Control Transactional Synchronization
+			Extensions (TSX) feature in Intel processors that
+			support TSX control.
+
+			This parameter controls the TSX feature. The options are:
+
+			on	- Enable TSX on the system. Although there are
+				mitigations for all known security vulnerabilities,
+				TSX has been known to be an accelerator for
+				several previous speculation-related CVEs, and
+				so there may be unknown	security risks associated
+				with leaving it enabled.
+
+			off	- Disable TSX on the system. (Note that this
+				option takes effect only on newer CPUs which are
+				not vulnerable to MDS, i.e., have
+				MSR_IA32_ARCH_CAPABILITIES.MDS_NO=1 and which get
+				the new IA32_TSX_CTRL MSR through a microcode
+				update. This new MSR allows for the reliable
+				deactivation of the TSX functionality.)
+
+			auto	- Disable TSX if X86_BUG_TAA is present,
+				  otherwise enable TSX on the system.
+
+			Not specifying this option is equivalent to tsx=off.
+
+			See Documentation/hw-vuln/tsx_async_abort.rst
+			for more details.
+
+	tsx_async_abort= [X86,INTEL] Control mitigation for the TSX Async
+			Abort (TAA) vulnerability.
+
+			Similar to Micro-architectural Data Sampling (MDS)
+			certain CPUs that support Transactional
+			Synchronization Extensions (TSX) are vulnerable to an
+			exploit against CPU internal buffers which can forward
+			information to a disclosure gadget under certain
+			conditions.
+
+			In vulnerable processors, the speculatively forwarded
+			data can be used in a cache side channel attack, to
+			access data to which the attacker does not have direct
+			access.
+
+			This parameter controls the TAA mitigation.  The
+			options are:
+
+			full       - Enable TAA mitigation on vulnerable CPUs
+				     if TSX is enabled.
+
+			off        - Unconditionally disable TAA mitigation
+
+			On MDS-affected machines, tsx_async_abort=off can be
+			prevented by an active MDS mitigation as both vulnerabilities
+			are mitigated with the same mechanism so in order to disable
+			this mitigation, you need to specify mds=off too.
+
+			Not specifying this option is equivalent to
+			tsx_async_abort=full.  On CPUs which are MDS affected
+			and deploy MDS mitigation, TAA mitigation is not
+			required and doesn't provide any additional
+			mitigation.
+
+			For details see:
+			Documentation/hw-vuln/tsx_async_abort.rst
+
 	turbografx.map[2|3]=	[HW,JOY]
 			TurboGraFX parallel port interface
 			Format:
@@ -4397,6 +4485,15 @@ bytes respectively. Such letter suffixes can also be entirely omitted.
 			see Documentation/watchdog/watchdog-parameters.txt
 			or other driver-specific files in the
 			Documentation/watchdog/ directory.
+
+	workqueue.watchdog_thresh=
+			If CONFIG_WQ_WATCHDOG is configured, workqueue can
+			warn stall conditions and dump internal state to
+			help debugging.  0 disables workqueue stall
+			detection; otherwise, it's the stall threshold
+			duration in seconds.  The default value is 30 and
+			it can be updated at runtime by writing to the
+			corresponding sysfs file.
 
 	workqueue.disable_numa
 			By default, all work items queued to unbound
