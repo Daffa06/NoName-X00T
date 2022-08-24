@@ -3483,15 +3483,15 @@ void smblib_asus_monitor_start(struct smb_charger *chg, int time)
 #define SMBCHG_FLOAT_VOLTAGE_VALUE_4P064		0x4D
 #define SMBCHG_FLOAT_VOLTAGE_VALUE_4P350		0x73
 #define SMBCHG_FLOAT_VOLTAGE_VALUE_4P357		0x74
-#define SMBCHG_FLOAT_VOLTAGE_VALUE_4P385		0x78
-#define SMBCHG_FLOAT_VOLTAGE_VALUE_4P392		0x79
+#define SMBCHG_FLOAT_VOLTAGE_VALUE_4P385		0xF8
+#define SMBCHG_FLOAT_VOLTAGE_VALUE_4P392		0xF9
 #define SMBCHG_FAST_CHG_CURRENT_VALUE_850MA 	0x22
 #define SMBCHG_FAST_CHG_CURRENT_VALUE_1400MA 	0x38
 #define SMBCHG_FAST_CHG_CURRENT_VALUE_1475MA 	0x3B
 #define SMBCHG_FAST_CHG_CURRENT_VALUE_1500MA 	0x3C
 #define SMBCHG_FAST_CHG_CURRENT_VALUE_2000MA 	0x50
 #define SMBCHG_FAST_CHG_CURRENT_VALUE_2050MA 	0x52
-#define SMBCHG_FAST_CHG_CURRENT_VALUE_3000MA 	0x78
+#define SMBCHG_FAST_CHG_CURRENT_VALUE_3000MA 	0xF8
 enum JEITA_state {
 	JEITA_STATE_INITIAL,
 	JEITA_STATE_LESS_THAN_0,
@@ -3537,11 +3537,13 @@ int smbchg_jeita_judge_state(int old_State, int batt_tempr)
 	if (batt_tempr < 0)
 		result_State = JEITA_STATE_LESS_THAN_0;
 	  else if (batt_tempr < 100)
-		result_State = JEITA_STATE_RANGE_0_to_100;
+		result_State = JEITA_STATE_RANGE_0_to_100; 
+	  else if (batt_tempr < 450)
+		result_State = JEITA_STATE_RANGE_100_to_450;
 	  else if (batt_tempr < 500)
 		result_State = JEITA_STATE_RANGE_100_to_500;
-	  else if (batt_tempr < 600)
-		result_State = JEITA_STATE_RANGE_500_to_600;
+//	  else if (batt_tempr < 600)
+//		result_State = JEITA_STATE_RANGE_500_to_600;
 	  else
 		result_State = JEITA_STATE_LARGER_THAN_600;
 
@@ -3551,14 +3553,18 @@ int smbchg_jeita_judge_state(int old_State, int batt_tempr)
 			result_State = old_State;
 		}
 	}
-
 	if (old_State == JEITA_STATE_RANGE_0_to_100 && result_State == JEITA_STATE_RANGE_100_to_500) {
 		if (batt_tempr <= 130) {
 			result_State = old_State;
 		}
 	}
+	if (old_State == JEITA_STATE_RANGE_450_to_550 && result_State == JEITA_STATE_RANGE_100_to_450) {
+		if (batt_tempr >= 440) {
+			result_State = old_State;
+		}
+	}
 	if (old_State == JEITA_STATE_RANGE_500_to_600 && result_State == JEITA_STATE_RANGE_100_to_500) {
-		if (batt_tempr >= 470) {
+		if (batt_tempr >= 490) {
 			result_State = old_State;
 		}
 	}
