@@ -958,7 +958,6 @@ inserted:
 					ce->e_reusable = 0;
 				ea_bdebug(new_bh, "reusing; refcount now=%d",
 					  ref);
-				ext4_xattr_block_csum_set(inode, new_bh);
 				unlock_buffer(new_bh);
 				if (error)
 					goto cleanup_dquot;
