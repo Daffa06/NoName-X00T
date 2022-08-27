@@ -1851,10 +1851,6 @@ static ssize_t cpuset_write_resmask_wrapper(struct kernfs_open_file *of,
 	char _uclamp_value;
 #endif
 
-	if (task_is_booster(current)) {
-		for (i = 0; i < ARRAY_SIZE(cs_targets); i++) {
-			struct cs_target cs_tgt = cs_targets[i];
-
 			if (!strcmp(cpuset_cgroup_name, cs_tgt.name)) {
 #ifdef CONFIG_UCLAMP_ASSIST
 				for (j = 0; j < ARRAY_SIZE(uc_targets); j++) {
@@ -1875,7 +1871,6 @@ static ssize_t cpuset_write_resmask_wrapper(struct kernfs_open_file *of,
 				return cpuset_write_resmask_assist(of, cs_tgt, nbytes, off);
 			}
 		}
-	}
 
 	buf = strstrip(buf);
 
