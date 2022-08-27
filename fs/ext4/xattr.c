@@ -603,8 +603,6 @@ ext4_xattr_release_block(handle_t *handle, struct inode *inode,
 				mb_cache_entry_put(ext4_mb_cache, ce);
 			}
 		}
-		
-		ext4_xattr_block_csum_set(inode, bh);
 
 		/*
 		 * Beware of this ugliness: Releasing of xattr block references
@@ -962,9 +960,6 @@ inserted:
 					  ref);
 				ext4_xattr_block_csum_set(inode, new_bh);
 				unlock_buffer(new_bh);
-				error = ext4_handle_dirty_xattr_block(handle,
-								      inode,
-								      new_bh);
 				if (error)
 					goto cleanup_dquot;
 			}
