@@ -2737,8 +2737,6 @@ static u32 __compute_runnable_contrib(u64 n)
 
 	if (likely(n <= LOAD_AVG_PERIOD))
 		return runnable_avg_yN_sum[n];
-	else if (unlikely(n >= LOAD_AVG_MAX_N))
-		return LOAD_AVG_MAX;
 
 	/* Compute \Sum k^n combining precomputed values for k^i, \Sum k^j */
 	do {
