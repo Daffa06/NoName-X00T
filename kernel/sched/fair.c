@@ -107,14 +107,14 @@ unsigned int __read_mostly sysctl_sched_energy_aware = 1;
 unsigned int sysctl_sched_wakeup_granularity = 1000000UL;
 unsigned int normalized_sysctl_sched_wakeup_granularity = 1000000UL;
 
-const_debug unsigned int sysctl_sched_migration_cost = 500000UL;
+const_debug unsigned int sysctl_sched_migration_cost = 100000UL;
 
 /*
  * The exponential sliding  window over which load is averaged for shares
  * distribution.
  * (default: 10msec)
  */
-unsigned int __read_mostly sysctl_sched_shares_window = 10000000UL;
+unsigned int __read_mostly sysctl_sched_shares_window = 1000000UL;
 
 #ifdef CONFIG_CFS_BANDWIDTH
 /*
