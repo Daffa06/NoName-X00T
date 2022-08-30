@@ -344,6 +344,7 @@ static const struct device_attribute *_attr_list[] = {
 	&adreno_attr_preemption.attr,
 	&adreno_attr_hwcg.attr,
 	&adreno_attr_throttling.attr,
+	// &adreno_attr_throttling.attr,
 	NULL,
 };
 
