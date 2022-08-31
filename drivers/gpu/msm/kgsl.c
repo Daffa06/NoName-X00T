@@ -1029,10 +1029,10 @@ static void kgsl_process_private_close(struct kgsl_device_private *dev_priv,
 	 * directories and garbage collect any outstanding resources
 	 */
 
-	kgsl_process_uninit_sysfs(private);
+	process_release_memory(private);
+    
 	debugfs_remove_recursive(private->debug_root);
-
-	process_release_sync_sources(private);
+	kgsl_process_uninit_sysfs(private);
 
 	/* When using global pagetables, do not detach global pagetable */
 	if (private->pagetable->name != KGSL_MMU_GLOBAL_PT)
@@ -1046,8 +1046,6 @@ static void kgsl_process_private_close(struct kgsl_device_private *dev_priv,
 	 * deadlock with the IOMMU mutex if a page fault occurs
 	 */
 	mutex_unlock(&kgsl_driver.process_mutex);
-
-	process_release_memory(private);
 
 	kgsl_process_private_put(private);
 }
