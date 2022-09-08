@@ -234,7 +234,7 @@ static struct clk_rcg2 rbbmtimer_clk_src = {
 
 static const struct freq_tbl ftbl_rbcpr_clk_src[] = {
 	F(19200000, P_XO, 1, 0, 0),
-	F(65000000, P_GPLL0_OUT_MAIN_DIV, 6, 0, 0),
+	F(50000000, P_GPLL0_OUT_MAIN_DIV, 6, 0, 0),
 	{ }
 };
 
